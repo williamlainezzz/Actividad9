@@ -1,10 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowRight,
   Bell,
   BrainCircuit,
   CheckCircle2,
   Eye,
+  Fingerprint,
   GraduationCap,
   HeartHandshake,
   Home,
@@ -13,6 +14,7 @@ import {
   Link,
   Lock,
   Network,
+  Shield,
   ShieldAlert,
   ShieldCheck,
   Smartphone,
@@ -27,12 +29,15 @@ import dashboardImage from './assets/cyberpet-dashboard.png'
 import diagramImage from './assets/cyberpet-diagram.png'
 import './App.css'
 
-const revealUp = {
-  initial: { opacity: 0, y: 34 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.25 },
-  transition: { duration: 0.65, ease: 'easeOut' },
-}
+const navLinks = [
+  { href: '#problema', label: 'Problema' },
+  { href: '#que-es', label: 'Qué es' },
+  { href: '#como-funciona', label: 'Cómo funciona' },
+  { href: '#funciones', label: 'Funciones' },
+  { href: '#beneficios', label: 'Beneficios' },
+  { href: '#panel-visual', label: 'Visual' },
+  { href: '#ia', label: 'IA' },
+]
 
 const problemCards = [
   { icon: Link, title: 'Phishing y enlaces sospechosos' },
@@ -115,10 +120,15 @@ const aiTools = [
   },
 ]
 
-function SectionTitle({ kicker, title, text }) {
+function SectionHead({ kicker, title, text, motionProps }) {
   return (
-    <motion.div className="section-copy" {...revealUp}>
-      {kicker && <p className="kicker">{kicker}</p>}
+    <motion.div className="section-head" {...motionProps}>
+      {kicker && (
+        <p className="kicker">
+          <span className="kicker-dot" aria-hidden="true" />
+          {kicker}
+        </p>
+      )}
       <h2>{title}</h2>
       {text && <p>{text}</p>}
     </motion.div>
@@ -126,148 +136,321 @@ function SectionTitle({ kicker, title, text }) {
 }
 
 function App() {
+  const reducedMotion = useReducedMotion()
+  // ESLint (sin eslint-plugin-react) no detecta uso de `motion.*` o `<Icon />` en JSX.
+  // Este alias evita falsos positivos de no-unused-vars sin cambiar el comportamiento.
+  const Motion = motion
+
+  const viewport = { once: true, amount: 0.25 }
+  const revealIn = {
+    initial: {
+      opacity: 0,
+      y: reducedMotion ? 0 : -10,
+      filter: reducedMotion ? 'none' : 'blur(10px)',
+    },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    transition: { duration: reducedMotion ? 0 : 0.7, ease: 'easeOut' },
+  }
+  const revealUp = {
+    initial: {
+      opacity: 0,
+      y: reducedMotion ? 0 : 26,
+      filter: reducedMotion ? 'none' : 'blur(10px)',
+    },
+    whileInView: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    viewport,
+    transition: { duration: reducedMotion ? 0 : 0.7, ease: 'easeOut' },
+  }
+
+  const gridStagger = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: reducedMotion ? 0 : 0.09, delayChildren: reducedMotion ? 0 : 0.05 },
+    },
+  }
+
+  const gridItem = {
+    hidden: {
+      opacity: 0,
+      y: reducedMotion ? 0 : 22,
+      filter: reducedMotion ? 'none' : 'blur(10px)',
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: reducedMotion ? 0 : 0.6, ease: 'easeOut' },
+    },
+  }
+
+  const liftHover = reducedMotion ? {} : { y: -6 }
+
   return (
-    <div className="app-shell">
-      <div className="ambient ambient-cyan" />
-      <div className="ambient ambient-violet" />
+    <div className="page" id="inicio">
+      <a className="skip-link" href="#contenido">
+        Saltar al contenido
+      </a>
+      <div className="bg" aria-hidden="true" />
 
-      <header className="hero" id="inicio">
-        <motion.div className="hero-content" {...revealUp}>
-          <p className="kicker">Cyberseguridad doméstica inteligente</p>
-          <h1>CyberPet Home</h1>
-          <h2>Tu guardián digital en casa</h2>
-          <p>
-            CyberPet Home es una mascota digital inteligente diseñada para proteger el
-            hogar conectado. Detecta amenazas cibernéticas, alerta al usuario en tiempo
-            real y traduce riesgos complejos en acciones simples y comprensibles para
-            toda la familia.
-          </p>
-          <div className="hero-cta">
-            <a href="#como-funciona" className="btn btn-primary">
-              Explorar cómo funciona <ArrowRight size={18} />
-            </a>
-            <a href="#beneficios" className="btn btn-secondary">
-              Ver beneficios
-            </a>
-          </div>
-        </motion.div>
+      <header className="topbar">
+        <div className="wrap topbar-inner">
+          <motion.a className="brand" href="#inicio" {...revealIn}>
+            <span className="brand-mark" aria-hidden="true">
+              <Shield size={18} />
+            </span>
+            <span>
+              <strong>CyberPet</strong> <em>Home</em>
+            </span>
+          </motion.a>
 
-        <motion.div
-          className="hero-visual card-glass"
-          initial={{ opacity: 0, scale: 0.94 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.75, ease: 'easeOut' }}
-        >
-          <img src={heroImage} alt="CyberPet Home - imagen principal del producto" />
-          <span className="image-chip">/src/assets/cyberpet-hero.png</span>
-        </motion.div>
+          <Motion.nav className="nav" aria-label="Secciones" {...revealIn}>
+            {navLinks.map((link) => (
+              <a key={link.href} href={link.href}>
+                {link.label}
+              </a>
+            ))}
+            <a className="nav-cta" href="#como-funciona">
+              Ver demo conceptual <ArrowRight size={16} />
+            </a>
+          </Motion.nav>
+        </div>
       </header>
 
-      <main>
+      <main id="contenido" className="wrap">
+        <section className="hero" aria-label="Portada">
+          <div className="hero-grid">
+            <motion.div {...revealUp}>
+              <p className="kicker">
+                <span className="kicker-dot" aria-hidden="true" />
+                Cyberseguridad doméstica inteligente
+              </p>
+              <h1>
+                CyberPet <span>Home</span>
+              </h1>
+              <h2>Una mascota digital que convierte riesgos complejos en acciones simples.</h2>
+              <p className="lede">
+                Diseñado para hogares conectados: detecta amenazas conceptuales, alerta en
+                tiempo real y guía con recomendaciones claras para proteger dispositivos,
+                cuentas y redes sin lenguaje técnico intimidante.
+              </p>
+
+              <div className="cta-row">
+                <a href="#como-funciona" className="btn btn-primary">
+                  Explorar cómo funciona <ArrowRight size={18} />
+                </a>
+                <a href="#beneficios" className="btn btn-secondary">
+                  Ver beneficios
+                </a>
+              </div>
+
+              <div className="pill-row" aria-label="Puntos clave">
+                <span className="pill">
+                  <ShieldCheck size={18} />
+                  Alertas claras
+                </span>
+                <span className="pill">
+                  <Fingerprint size={18} />
+                  Hábitos seguros
+                </span>
+                <span className="pill">
+                  <BrainCircuit size={18} />
+                  Guía inteligente
+                </span>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="hero-visual"
+              initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.97 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: reducedMotion ? 0 : 0.9, ease: 'easeOut' }}
+            >
+              <img src={heroImage} alt="CyberPet Home - visual conceptual del producto" />
+              <span className="caption-chip">Vista conceptual</span>
+            </motion.div>
+          </div>
+        </section>
+
         <section className="section" id="problema">
-          <SectionTitle
-            title="La seguridad digital del hogar se ha vuelto más compleja que nunca"
-            text="Hoy en día, las amenazas digitales ya no afectan únicamente a empresas o expertos en informática. También están presentes en casas, celulares, computadoras, redes WiFi y dispositivos inteligentes de uso diario. Muchas personas se conectan, descargan aplicaciones o abren enlaces sin saber si realmente están seguros."
+          <SectionHead
+            kicker="Contexto"
+            title="La seguridad digital del hogar se volvió demasiado difícil de leer"
+            text="Las amenazas ya no viven solo en empresas: también aparecen en celulares, computadoras, redes WiFi y dispositivos inteligentes. Mucha gente navega, descarga y conecta sin saber cuándo algo es realmente peligroso."
+            motionProps={revealUp}
           />
-          <motion.p className="section-paragraph" {...revealUp}>
-            El problema es que la mayoría de las herramientas de ciberseguridad son
-            difíciles de entender, poco amigables y demasiado técnicas para usuarios
-            comunes. Como resultado, familias, estudiantes y trabajadores quedan
+
+          <motion.p className="lede" {...revealUp}>
+            El problema es que la mayoría de herramientas de ciberseguridad se sienten
+            frías, técnicas o abrumadoras. Eso deja a familias, estudiantes y trabajadores
             expuestos a fraudes, accesos no autorizados, robo de datos y otros riesgos
-            digitales.
+            cotidianos.
           </motion.p>
 
-          <div className="card-grid cols-4">
-            {problemCards.map(({ icon: Icon, title }) => (
-              <motion.article key={title} className="card-glass card" {...revealUp}>
+          <motion.div
+            className="grid cols-4"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
+            {problemCards.map((card) => {
+              const Icon = card.icon
+              return (
+              <motion.article
+                key={card.title}
+                className="card"
+                variants={gridItem}
+                whileHover={liftHover}
+              >
                 <Icon size={22} />
-                <h3>{title}</h3>
+                <h3>{card.title}</h3>
               </motion.article>
-            ))}
-          </div>
+              )
+            })}
+          </motion.div>
         </section>
 
         <section className="section" id="que-es">
           <div className="two-col">
             <div>
-              <SectionTitle
-                title="Una nueva forma de entender la ciberseguridad"
-                text="CyberPet Home es un asistente inteligente de ciberseguridad representado como una mascota digital interactiva. Su función es acompañar al usuario dentro de su entorno digital, identificar amenazas cotidianas y ofrecer recomendaciones claras para proteger dispositivos, cuentas y redes del hogar."
+              <SectionHead
+                kicker="Propuesta"
+                title="Ciberseguridad con lenguaje humano, visual y cercano"
+                text="CyberPet Home es un asistente de ciberseguridad representado como una mascota digital interactiva. Acompaña al usuario, identifica señales de riesgo y recomienda acciones concretas para proteger dispositivos, cuentas y redes del hogar."
+                motionProps={revealUp}
               />
-              <motion.p className="section-paragraph" {...revealUp}>
-                A diferencia de las soluciones tradicionales, CyberPet Home no solo alerta
-                sobre riesgos: también los explica en un lenguaje simple, visual y cercano,
-                haciendo que la seguridad digital sea más accesible para cualquier persona.
+              <motion.p className="lede" {...revealUp}>
+                En vez de solo “asustar” con alertas, explica qué pasa y qué hacer después.
+                El objetivo es convertir prevención en hábitos diarios, sin jerga técnica.
               </motion.p>
             </div>
 
-            <motion.figure className="card-glass media-card" {...revealUp}>
+            <motion.figure className="media" {...revealUp}>
               <img
                 src={deviceProtectionImage}
                 alt="CyberPet Home protegiendo dispositivos del usuario"
               />
-              <figcaption>/src/assets/cyberpet-device-protection.png</figcaption>
+              <figcaption>Protección de dispositivos</figcaption>
             </motion.figure>
           </div>
         </section>
 
         <section className="section" id="como-funciona">
-          <SectionTitle title="Protección inteligente en tres pasos" />
+          <SectionHead
+            kicker="Flujo"
+            title="Protección inteligente en tres pasos"
+            text="Un ciclo corto, entendible y accionable: detectar, alertar y recomendar."
+            motionProps={revealUp}
+          />
 
-          <div className="card-grid cols-3">
-            {steps.map(({ icon: Icon, title, text }) => (
-              <motion.article key={title} className="card-glass card" {...revealUp}>
+          <motion.div
+            className="grid cols-3"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
+            {steps.map((step) => {
+              const Icon = step.icon
+              return (
+              <motion.article
+                key={step.title}
+                className="card"
+                variants={gridItem}
+                whileHover={liftHover}
+              >
                 <Icon size={22} />
-                <h3>{title}</h3>
-                <p>{text}</p>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
               </motion.article>
-            ))}
-          </div>
+              )
+            })}
+          </motion.div>
 
-          <motion.figure className="card-glass media-card" {...revealUp}>
+          <motion.figure className="media" {...revealUp}>
             <img src={diagramImage} alt="Diagrama conceptual de funcionamiento" />
-            <figcaption>/src/assets/cyberpet-diagram.png</figcaption>
+            <figcaption>Diagrama conceptual</figcaption>
           </motion.figure>
         </section>
 
         <section className="section" id="funciones">
-          <SectionTitle title="Funciones diseñadas para cuidar tu hogar digital" />
+          <SectionHead
+            kicker="Capacidades"
+            title="Funciones diseñadas para cuidar tu hogar digital"
+            text="Acciones enfocadas en lo que más expone a usuarios cotidianos."
+            motionProps={revealUp}
+          />
 
-          <div className="card-grid cols-3">
-            {features.map(({ icon: Icon, title, text }) => (
-              <motion.article key={title} className="card-glass card" {...revealUp}>
+          <motion.div
+            className="grid cols-3"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
+            {features.map((feature) => {
+              const Icon = feature.icon
+              return (
+              <motion.article
+                key={feature.title}
+                className="card"
+                variants={gridItem}
+                whileHover={liftHover}
+              >
                 <Icon size={22} />
-                <h3>{title}</h3>
-                <p>{text}</p>
+                <h3>{feature.title}</h3>
+                <p>{feature.text}</p>
               </motion.article>
-            ))}
-          </div>
+              )
+            })}
+          </motion.div>
         </section>
 
         <section className="section" id="publico">
-          <SectionTitle
-            title="Pensado para personas reales, no solo para expertos"
-            text="CyberPet Home está diseñado para usuarios cotidianos que utilizan tecnología todos los días, pero que no necesariamente tienen conocimientos avanzados en ciberseguridad. Su enfoque busca acercar la protección digital a quienes más la necesitan de una manera sencilla y amigable."
+          <SectionHead
+            kicker="Personas"
+            title="Pensado para usuarios reales, no solo para expertos"
+            text="Tecnología todos los días, seguridad sin esfuerzo: el enfoque es accesible, claro y con acompañamiento visual."
+            motionProps={revealUp}
           />
 
-          <div className="card-grid cols-5">
-            {audience.map(({ icon: Icon, title }) => (
-              <motion.article key={title} className="card-glass card compact" {...revealUp}>
+          <motion.div
+            className="grid cols-5"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
+            {audience.map((aud) => {
+              const Icon = aud.icon
+              return (
+              <motion.article
+                key={aud.title}
+                className="card compact"
+                variants={gridItem}
+                whileHover={liftHover}
+              >
                 <Icon size={20} />
-                <h3>{title}</h3>
+                <h3>{aud.title}</h3>
               </motion.article>
-            ))}
-          </div>
+              )
+            })}
+          </motion.div>
         </section>
 
         <section className="section" id="beneficios">
-          <SectionTitle title="Más que seguridad: tranquilidad, educación y prevención" />
+          <SectionHead
+            kicker="Resultado"
+            title="Más que seguridad: tranquilidad, educación y prevención"
+            text="Cuando la gente entiende el riesgo, toma mejores decisiones. CyberPet Home apunta a eso."
+            motionProps={revealUp}
+          />
 
           <div className="two-col">
-            <motion.article className="card-glass card" {...revealUp}>
+            <motion.article className="card" {...revealUp}>
               <h3>Beneficios para el usuario</h3>
-              <ul className="benefit-list">
+              <ul className="list">
                 {[
                   'Reduce la exposición a amenazas digitales comunes',
                   'Facilita la comprensión de riesgos tecnológicos',
@@ -276,95 +459,110 @@ function App() {
                   'Hace que la ciberseguridad sea menos intimidante',
                 ].map((benefit) => (
                   <li key={benefit}>
-                    <CheckCircle2 size={17} />
+                    <CheckCircle2 size={18} />
                     <span>{benefit}</span>
                   </li>
                 ))}
               </ul>
             </motion.article>
 
-            <motion.article className="card-glass card" {...revealUp}>
+            <motion.article className="card" {...revealUp}>
               <h3>Impacto social</h3>
               <p>
                 CyberPet Home promueve una cultura de prevención digital dentro del hogar,
                 ayudando a que más personas comprendan la importancia de proteger su
-                información y sus dispositivos. Su enfoque accesible puede contribuir a
-                disminuir fraudes, engaños y malas prácticas tecnológicas en la vida
-                cotidiana.
+                información y sus dispositivos.
               </p>
-
-              <h3>Impacto tecnológico</h3>
+              <h3 style={{ marginTop: '1.1rem' }}>Impacto tecnológico</h3>
               <p>
-                El producto propone una manera innovadora de integrar inteligencia
-                artificial, monitoreo de riesgos y experiencia de usuario en un solo
-                ecosistema. Su valor está en transformar la ciberseguridad en algo más
-                humano, visual e interactivo.
+                Integra IA, monitoreo conceptual de riesgos y UX en un ecosistema único:
+                seguridad como algo visual, cotidiano e interactivo.
               </p>
             </motion.article>
           </div>
 
-          <motion.figure className="card-glass media-card" {...revealUp}>
+          <motion.figure className="media" {...revealUp}>
             <img src={smartHomeImage} alt="Hogar digital protegido con CyberPet Home" />
-            <figcaption>/src/assets/cyberpet-smart-home.png</figcaption>
+            <figcaption>Hogar conectado</figcaption>
           </motion.figure>
         </section>
 
         <section className="section" id="panel-visual">
-          <SectionTitle
+          <SectionHead
+            kicker="Interfaz"
             title="Una experiencia visual de seguridad inteligente"
-            text="La propuesta visual de CyberPet Home combina una mascota digital futurista con un entorno tecnológico moderno. A través de ilustraciones conceptuales, paneles interactivos y escenas de uso, el producto muestra cómo la ciberseguridad puede convertirse en una experiencia cercana, comprensible y atractiva."
+            text="La propuesta combina una mascota futurista con un entorno moderno: paneles, escenas de uso y un lenguaje gráfico que guía sin saturar."
+            motionProps={revealUp}
           />
 
-          <div className="gallery-grid">
-            <motion.figure className="card-glass media-card" {...revealUp}>
-              <img src={heroImage} alt="Imagen principal del producto" />
-              <figcaption>Imagen principal</figcaption>
-            </motion.figure>
-
-            <motion.figure className="card-glass media-card" {...revealUp}>
-              <img src={deviceProtectionImage} alt="Escena protegiendo dispositivos" />
-              <figcaption>Escena de protección</figcaption>
-            </motion.figure>
-
-            <motion.figure className="card-glass media-card" {...revealUp}>
-              <img src={dashboardImage} alt="Dashboard del sistema CyberPet Home" />
-              <figcaption>Dashboard del sistema</figcaption>
-            </motion.figure>
-
-            <motion.figure className="card-glass media-card" {...revealUp}>
-              <img src={diagramImage} alt="Diagrama de funcionamiento" />
-              <figcaption>Diagrama de funcionamiento</figcaption>
-            </motion.figure>
-          </div>
+          <motion.div
+            className="gallery"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
+            {[
+              { src: heroImage, alt: 'Imagen principal del producto', caption: 'Imagen principal' },
+              {
+                src: deviceProtectionImage,
+                alt: 'Escena protegiendo dispositivos',
+                caption: 'Protección',
+              },
+              { src: dashboardImage, alt: 'Dashboard del sistema', caption: 'Dashboard' },
+              { src: diagramImage, alt: 'Diagrama de funcionamiento', caption: 'Diagrama' },
+            ].map((item) => (
+              <motion.figure key={item.caption} className="media" variants={gridItem}>
+                <img src={item.src} alt={item.alt} />
+                <figcaption>{item.caption}</figcaption>
+              </motion.figure>
+            ))}
+          </motion.div>
         </section>
 
         <section className="section" id="ia">
-          <SectionTitle title="Desarrollado con apoyo de inteligencia artificial" />
+          <SectionHead
+            kicker="Stack"
+            title="Desarrollado con apoyo de inteligencia artificial"
+            text="IA como copiloto creativo y técnico para acelerar el concepto y la implementación."
+            motionProps={revealUp}
+          />
 
-          <div className="card-grid cols-3">
+          <motion.div
+            className="grid cols-3"
+            variants={gridStagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+          >
             {aiTools.map(({ title, text }) => (
-              <motion.article key={title} className="card-glass card" {...revealUp}>
+              <motion.article
+                key={title}
+                className="card"
+                variants={gridItem}
+                whileHover={liftHover}
+              >
                 <p className="tool-title">{title}</p>
                 <p>{text}</p>
               </motion.article>
             ))}
-          </div>
+          </motion.div>
         </section>
-      </main>
 
-      <motion.footer className="section footer-cta" {...revealUp}>
-        <h2>El futuro de la ciberseguridad debe ser inteligente, visual y cercano</h2>
-        <p>
-          CyberPet Home redefine la forma en que las personas se relacionan con la
-          seguridad digital. En lugar de alertas frías y difíciles de entender, propone
-          una experiencia interactiva, educativa y accesible que protege el hogar
-          conectado de una manera innovadora. Su visión es hacer que la ciberseguridad
-          deje de ser complicada y se convierta en una herramienta cotidiana para todos.
-        </p>
-        <a href="#inicio" className="btn btn-primary">
-          Descubrir el concepto <ArrowRight size={18} />
-        </a>
-      </motion.footer>
+        <footer className="footer" aria-label="Cierre">
+          <motion.div className="footer-card" {...revealUp}>
+            <h2>La ciberseguridad del futuro debe sentirse simple</h2>
+            <p>
+              CyberPet Home propone una experiencia interactiva, educativa y accesible.
+              Menos miedo, más claridad: detectar, entender y actuar con confianza dentro
+              del hogar conectado.
+            </p>
+            <a href="#inicio" className="btn btn-primary">
+              Volver arriba <ArrowRight size={18} />
+            </a>
+          </motion.div>
+        </footer>
+      </main>
     </div>
   )
 }
